@@ -14,7 +14,7 @@ else:
 web3.eth.default_account = web3.eth.accounts[0]
 
 balance = web3.eth.get_balance(web3.eth.default_account)
-print(f"Account Balance: {web3.fromWei(balance, 'ether')} ETH")
+print(f"Account Balance: {web3.from_wei(balance, 'ether')} ETH")
 
 if balance == 0:
     print("Insufficient balance to perform transactions.")
@@ -42,9 +42,10 @@ contract_abi = [
     },
 ]
 
-contract_address = "0xYourContractAddressHere"
+contract_address = "0x73cd528f1AC73A2b629998e07900AAff8849009b"
 
 scrape_storage = web3.eth.contract(address=contract_address, abi=contract_abi)
+
 
 def extract_text_from_site(url):
     try:
@@ -58,6 +59,7 @@ def extract_text_from_site(url):
         print(f"Error fetching the URL: {e}")
         return None
 
+
 # URL to scrape
 url = "https://www.geeksforgeeks.org/"
 site_text = extract_text_from_site(url)
@@ -66,7 +68,9 @@ if site_text:
     print(f"Scraped Data (preview): {site_text[:100]}...")
 
     try:
-        tx_hash = scrape_storage.functions.storeData(site_text[:200]).transact({'gas': 3000000})
+        tx_hash = scrape_storage.functions.storeData(site_text[:200]).transact(
+            {"gas": 3000000}
+        )
         web3.eth.wait_for_transaction_receipt(tx_hash)
         print("Data stored in the blockchain.")
     except ValueError as e:

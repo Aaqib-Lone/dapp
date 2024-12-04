@@ -1,27 +1,54 @@
-import requests
-from bs4 import BeautifulSoup
+from web3 import Web3
 
+# Connect to Ganache
+ganache_url = "http://127.0.0.1:7545"
+web3 = Web3(Web3.HTTPProvider(ganache_url))
 
-def extract_text_from_site(url):
-    try:
-        response = requests.get(url)
-        response.raise_for_status()
+if not web3.is_connected():
+    print("Failed to connect to Ganache.")
+    exit()
 
-        soup = BeautifulSoup(response.text, "html.parser")
+web3.eth.default_account = web3.eth.accounts[0]
+contract_address = "0xed3F79fdc550cc4000E96bf6D003208A369f99aF"
 
-        text = soup.get_text(separator="\n")
+# ABI
+contract_abi = [
+    {
+        "constant": False,
+        "inputs": [{"name": "_data", "type": "string"}],
+        "name": "storeData",
+        "outputs": [],
+        "payable": False,
+        "stateMutability": "nonpayable",
+        "type": "function",
+    },
+    {
+        "constant": True,
+        "inputs": [],
+        "name": "retrieveData",
+        "outputs": [{"name": "", "type": "string"}],
+        "payable": False,
+        "stateMutability": "view",
+        "type": "function",
+    },
+]
 
-        return text
-    except requests.exceptions.RequestException as e:
-        print(f"Error fetching the URL: {e}")
-        return None
+# Instantiate the contract
+scrape_storage = web3.eth.contract(address=contract_address, abi=contract_abi)
 
+# Test the contract
+try:
+    # Store data
+    print("Storing data...")
+    tx_hash = scrape_storage.functions.storeData("Hello, Blockchain!").transact(
+        {"from": web3.eth.default_account, "gas": 5000000}
+    )
+    web3.eth.wait_for_transaction_receipt(tx_hash)
+    print("Data stored successfully!")
 
-url = "https://www.geeksforgeeks.org/"
-
-
-site_text = extract_text_from_site(url)
-if site_text:
-    with open("file.txt", "w") as f:
-        f.write(site_text)
-    print(site_text)
+    # Retrieve data
+    print("Retrieving data...")
+    result = scrape_storage.functions.retrieveData().call()
+    print(f"Retrieved data: {result}")
+except Exception as e:
+    print(f"Error interacting with the contract: {e}")
